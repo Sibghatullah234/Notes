@@ -41,15 +41,24 @@
     <!-- Firebase SDKs for authentication and Firestore database -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // --- MANDATORY GLOBAL VARIABLES ---
-        // These variables are provided by the canvas environment for Firebase access.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
+        // --- YOUR FIREBASE CONFIGURATION GOES HERE ---
+        // You MUST replace the placeholder values with your own project's config.
+        // Get this from your Firebase console -> Project Settings.
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+        };
+        // The `appId` below is used for Firestore collection path naming.
+        // You can use the same value as above or any unique string for your app.
+        const appId = "my-notes-app"; 
+
         // Global variables for Firebase services and state
         let app, db, auth, userId;
         let editingNoteId = null;
@@ -57,9 +66,9 @@
         // Ensure the app initializes once the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', async () => {
             // Check if Firebase config is available
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.error("Firebase config is not available. The app will not function correctly.");
-                return;
+            if (Object.keys(firebaseConfig).length === 0 || firebaseConfig.apiKey === "YOUR_API_KEY") {
+                console.error("Firebase config is not available. Please replace the placeholder values.");
+                return showMessage("Please configure your Firebase project in the code to get started.", "red");
             }
             
             try {
@@ -68,12 +77,8 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // Sign in the user using the provided token or anonymously
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Sign in the user anonymously to get a unique user ID
+                await signInAnonymously(auth);
 
                 // Listen for authentication state changes
                 onAuthStateChanged(auth, (user) => {
@@ -89,6 +94,7 @@
                 });
             } catch (error) {
                 console.error("Error during Firebase initialization or sign-in:", error);
+                showMessage('Firebase initialization failed. Check your config and network.', 'red');
             }
         });
 
